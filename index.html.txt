@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>肠胃健康深度自测评估</title>
+    <style>
+        :root {
+            --primary-color: #4CAF50;
+            --warning-color: #ff9800;
+            --danger-color: #f44336;
+            --bg-color: #f4f7f6;
+            --card-bg: #ffffff;
+            --text-color: #333;
+        }
+
+        body {
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        h1 {
+            color: var(--primary-color);
+            margin-bottom: 10px;
+        }
+
+        .intro {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            margin-bottom: 30px;
+            font-size: 0.9em;
+            color: #666;
+            border-left: 5px solid var(--primary-color);
+        }
+
+        .section-title {
+            background-color: #e8f5e9;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 40px;
+            margin-bottom: 20px;
+            color: #2e7d32;
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+
+        .question-item {
+            background: var(--card-bg);
+            padding: 20px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.03);
+            transition: transform 0.2s;
+        }
+
+        .question-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        }
+
+        .question-text {
+            font-weight: 600;
+            margin-bottom: 15px;
+            display: block;
+        }
+
+        .options {
+            display: flex;
+            gap: 20px;
+        }
+
+        .option-label {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            font-weight: normal;
+        }
+
+        .option-label input {
+            margin-right: 8px;
+            transform: scale(1.2);
+            cursor: pointer;
+        }
+
+        .btn-submit {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.2em;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 40px;
+            transition: background-color 0.3s;
+        }
+
+        .btn-submit:hover {
+            background-color: #45a049;
+        }
+
+        /* Result Modal Styles */
+        .result-container {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 1000;
+            overflow-y: auto;
+        }
+
+        .result-box {
+            background: white;
+            width: 90%;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 30px;
+            border-radius: 12px;
+            position: relative;
+            text-align: center;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 30px;
+            cursor: pointer;
+            color: #999;
+        }
+
+        .score-display {
+            font-size: 3em;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+
+        .result-title {
+            font-size: 1.5em;
+            margin-bottom: 15px;
+        }
+
+        .result-desc {
+            text-align: left;
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+
+        .level-green { color: var(--primary-color); }
+        .level-yellow { color: var(--warning-color); }
+        .level-red { color: var(--danger-color); }
+        .level-black { color: #000; }
+
+        @media (max-width: 600px) {
+            .options {
+                flex-direction: column;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>🏥 肠胃健康自测评估表</h1>
+        <p>基于40项指标的深度筛查</p>
+    </header>
+
+    <div class="intro">
+        <p><strong>⚠️ 免责声明：</strong> 本测试结果仅供自我健康管理参考，不能代替医生的专业诊断。如果您有剧烈疼痛、便血或不明原因消瘦，请立即就医。</p>
+        <p><strong>评分规则：</strong> 最近3个月内：从不(0分) / 偶尔(1分) / 经常(2分)</p>
+    </div>
+
+    <form id="quizForm">
+        <div id="quiz-content"></div>
+        <button type="button" class="btn-submit" onclick="calculateScore()">查看测试结果</button>
+    </form>
+</div>
+
+<!-- Result Modal -->
+<div id="resultModal" class="result-container">
+    <div class="result-box">
+        <span class="close-btn" onclick="closeModal()">&times;</span>
+        <h2>您的评估结果</h2>
+        <div id="scoreDisplay" class="score-display">0</div>
+        <div id="resultTitle" class="result-title"></div>
+        <div id="resultDescription" class="result-desc"></div>
+        <button class="btn-submit" onclick="closeModal()" style="margin-top:20px; background:#666;">关闭</button>
+    </div>
+</div>
+
+<script>
+    // 题目数据
+    const questions = [
+        // 第一部分
+        { section: "第一部分：上消化道症状（胃与食管）", items: [
+            "你是否经常感到反酸，觉得有酸水涌上喉咙口？",
+            "你是否经常感到“烧心”（胸骨后有灼烧感）？",
+            "吃完饭后，是否经常觉得胃胀、肚子鼓鼓的难受？",
+            "是否稍微吃一点东西就觉得饱了（早饱感）？",
+            "你是否有频繁打嗝（嗳气）的现象，且难以控制？",
+            "是否经常感到恶心，或者有想呕吐的感觉？",
+            "是否存在口臭问题（排除牙齿疾病后）？",
+            "空腹时或半夜是否感到胃部隐痛，进食后可缓解？",
+            "进食后是否立即出现上腹部疼痛？",
+            "是否感觉吞咽食物有阻碍感或异物感？"
+        ]},
+        // 第二部分
+        { section: "第二部分：下消化道症状（肠道与排泄）", items: [
+            "你的排便频率是否不规律（如少于每周3次或每天超过3次）？",
+            "是否经常便秘，排便费力，大便干结像“羊屎球”？",
+            "是否经常腹泻，或者大便不成形、呈糊状/水状？",
+            "是否出现过腹泻与便秘交替发生的情况？",
+            "排便后是否总觉得没排干净（里急后重感）？",
+            "大便颜色是否异常（如黑色柏油状、陶土色或带鲜血）？",
+            "是否经常感觉腹部绞痛，排便后疼痛会减轻？",
+            "你的放屁（排气）次数是否明显过多，且气味特别难闻？",
+            "腹部是否经常发出“咕噜咕噜”的响声（肠鸣音亢进）？",
+            "肛门部位是否有疼痛、瘙痒或坠胀感？"
+        ]},
+        // 第三部分
+        { section: "第三部分：饮食与生活习惯（风险因素）", items: [
+            "你吃饭速度是否很快，经常狼吞虎咽，咀嚼不充分？",
+            "饮食是否不规律，经常不吃早餐或暴饮暴食？",
+            "是否偏爱重口味食物（过辣、过咸、过油、过烫）？",
+            "是否经常吃生冷食物（冰饮、刺身、凉拌菜）？",
+            "是否经常在睡前2小时内吃夜宵？",
+            "每日饮水量是否不足（少于1500ml，约7-8杯水）？",
+            "蔬菜水果摄入是否较少（膳食纤维摄入不足）？",
+            "是否有频繁饮酒或空腹喝浓茶、浓咖啡的习惯？",
+            "是否经常在外就餐或点外卖（卫生状况及油盐难以控制）？",
+            "是否吸烟或长期暴露在二手烟环境中？"
+        ]},
+        // 第四部分
+        { section: "第四部分：身心状态与全身反应", items: [
+            "最近是否感觉精神压力大，焦虑或紧张时容易胃疼/拉肚子？",
+            "睡眠质量是否较差，经常失眠或熬夜？",
+            "是否经常感到身体疲乏无力，即使休息也缓不过来？",
+            "脸色是否蜡黄、暗沉，或者皮肤经常出油、长痘？",
+            "体重是否在没有刻意减肥的情况下突然下降？",
+            "舌苔是否厚腻（白厚或黄厚）？",
+            "换季或气温下降时，肠胃是否容易不舒服？",
+            "是否长期服用抗生素、止痛药（如布洛芬、阿司匹林）？",
+            "家族直系亲属中是否有肠胃癌或慢性肠胃病史？",
+            "运动量是否很少，经常久坐不动？"
+        ]}
+    ];
+
+    // 渲染题目
+    function renderQuiz() {
+        const container = document.getElementById('quiz-content');
+        let qIndex = 0;
+
+        questions.forEach((part, pIndex) => {
+            // 添加部分标题
+            const sectionTitle = document.createElement('div');
+            sectionTitle.className = 'section-title';
+            sectionTitle.innerText = part.section;
+            container.appendChild(sectionTitle);
+
+            // 添加题目
+            part.items.forEach((qText) => {
+                qIndex++;
+                const qItem = document.createElement('div');
+                qItem.className = 'question-item';
+                qItem.innerHTML = `
+                    <label class="question-text">${qIndex}. ${qText}</label>
+                    <div class="options">
+                        <label class="option-label"><input type="radio" name="q${qIndex}" value="0" checked> 从不 (0分)</label>
+                        <label class="option-label"><input type="radio" name="q${qIndex}" value="1"> 偶尔 (1分)</label>
+                        <label class="option-label"><input type="radio" name="q${qIndex}" value="2"> 经常 (2分)</label>
+                    </div>
+                `;
+                container.appendChild(qItem);
+            });
+        });
+    }
+
+    // 计算分数
+    function calculateScore() {
+        let totalScore = 0;
+        const totalQuestions = 40;
+        
+        // 遍历所有题目
+        for (let i = 1; i <= totalQuestions; i++) {
+            const radios = document.getElementsByName(`q${i}`);
+            for (const radio of radios) {
+                if (radio.checked) {
+                    totalScore += parseInt(radio.value);
+                }
+            }
+        }
+
+        showResult(totalScore);
+    }
+
+    // 显示结果逻辑
+    function showResult(score) {
+        const modal = document.getElementById('resultModal');
+        const scoreDisplay = document.getElementById('scoreDisplay');
+        const titleDisplay = document.getElementById('resultTitle');
+        const descDisplay = document.getElementById('resultDescription');
+
+        scoreDisplay.innerText = score + "分";
+        scoreDisplay.className = "score-display"; // reset class
+
+        let resultHTML = "";
+
+        if (score <= 15) {
+            scoreDisplay.classList.add('level-green');
+            titleDisplay.innerHTML = "<span class='level-green'>🟢 健康绿灯区</span>";
+            resultHTML = `
+                <p><strong>状态：</strong> 您的肠胃状况良好。</p>
+                <p><strong>建议：</strong> 请继续保持良好的生活和饮食习惯。定期体检，维持适量运动。</p>
+            `;
+        } else if (score <= 35) {
+            scoreDisplay.classList.add('level-yellow');
+            titleDisplay.innerHTML = "<span class='level-yellow'>🟡 亚健康黄灯区</span>";
+            resultHTML = `
+                <p><strong>状态：</strong> 肠胃已发出警告，可能存在功能性消化不良或轻度炎症。</p>
+                <p><strong>建议：</strong>
+                1. 调整饮食：规律三餐，细嚼慢咽。<br>
+                2. 作息调整：减少熬夜，适当补充益生菌。<br>
+                3. 观察：如自我调整2周无改善，建议咨询医生。</p>
+            `;
+        } else if (score <= 60) {
+            scoreDisplay.classList.add('level-red');
+            titleDisplay.innerHTML = "<span class='level-red'>🔴 预警红灯区</span>";
+            resultHTML = `
+                <p><strong>状态：</strong> 肠胃健康状况较差，可能存在慢性疾病。</p>
+                <p><strong>建议：</strong>
+                1. <strong>立即就医：</strong> 建议前往消化内科进行专业检查（如胃肠镜）。<br>
+                2. 严格管理：在医生指导下用药。</p>
+            `;
+        } else {
+            scoreDisplay.classList.add('level-black');
+            titleDisplay.innerHTML = "<span class='level-black'>⚫ 高危警报区</span>";
+            resultHTML = `
+                <p><strong>状态：</strong> 分数极高，或存在严重症状。</p>
+                <p><strong>建议：</strong> <strong>请务必立刻前往医院就诊，排除器质性病变！</strong>不要拖延。</p>
+            `;
+        }
+
+        descDisplay.innerHTML = resultHTML;
+        modal.style.display = "block";
+    }
+
+    function closeModal() {
+        document.getElementById('resultModal').style.display = "none";
+    }
+
+    // 初始化
+    renderQuiz();
+
+</script>
+
+</body>
+</html>
